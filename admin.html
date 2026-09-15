@@ -3,211 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة إدارة المحتوى | Admin Panel</title>
+    <title>لوحة التحكم</title>
     <style>
         :root {
             --bg-color: #0f172a;
             --card-bg: #1e293b;
             --accent: #38bdf8;
             --text: #f8fafc;
+            --text-sub: #94a3b8;
             --border: #334155;
         }
-
         body {
-            font-family: system-ui, -apple-system, sans-serif;
             background-color: var(--bg-color);
             color: var(--text);
+            font-family: system-ui, -apple-system, sans-serif;
             margin: 0;
             padding: 20px;
             display: flex;
             justify-content: center;
         }
-
-        .container {
+        .panel {
             width: 100%;
-            max-width: 650px;
-        }
-
-        /* نافذة الحماية بكلمة السر */
-        #auth-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: var(--bg-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 999;
-        }
-
-        .login-box, .form-card {
-            background: var(--card-bg);
-            padding: 24px;
-            border-radius: 12px;
+            max-width: 600px;
+            background-color: var(--card-bg);
             border: 1px solid var(--border);
-            width: 100%;
+            border-radius: 12px;
+            padding: 25px;
             box-sizing: border-box;
         }
-
-        .login-box {
-            max-width: 380px;
-            text-align: center;
-        }
-
-        h2 {
-            margin-top: 0;
-            color: var(--accent);
-        }
-
-        label {
-            display: block;
-            margin-top: 15px;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-
-        input, textarea, select {
+        h2 { color: var(--accent); margin-top: 0; text-align: center; }
+        label { display: block; margin-top: 15px; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
+        input, select, textarea {
             width: 100%;
             padding: 12px;
-            background: #090d16;
-            border: 1px solid var(--border);
             border-radius: 8px;
+            border: 1px solid var(--border);
+            background-color: #0f172a;
             color: var(--text);
             box-sizing: border-box;
-            font-size: 15px;
+            font-size: 0.95rem;
         }
-
+        textarea { height: 120px; resize: vertical; }
         button {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             margin-top: 20px;
-            background: var(--accent);
-            color: #000;
+            background-color: var(--accent);
+            color: #0f172a;
             border: none;
             border-radius: 8px;
             font-weight: bold;
+            font-size: 1rem;
             cursor: pointer;
-            font-size: 16px;
         }
-
-        button:hover {
-            opacity: 0.9;
+        #statusMsg { text-align: center; margin-top: 15px; font-weight: bold; }
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid var(--border);
         }
-
-        #status-msg {
-            margin-top: 15px;
-            text-align: center;
-            font-weight: bold;
+        .del-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: auto;
+            margin: 0;
         }
     </style>
 </head>
 <body>
+    <div class="panel">
+        <h2>نشر محتوى جديد</h2>
+        
+        <label>عنوان المقال أو الأداة:</label>
+        <input type="text" id="postTitle" placeholder="أدخل العنوان...">
 
-    <!-- نافذة تسجيل الدخول -->
-    <div id="auth-overlay">
-        <div class="login-box">
-            <h2>لوحة الإدارة السرية</h2>
-            <p>أدخل كلمة السر للمتابعة:</p>
-            <input type="password" id="admin-pass-input" placeholder="كلمة السر">
-            <button onclick="checkAuth()">دخول</button>
-            <p id="login-error" style="color: #ef4444; display: none; margin-top: 10px;">كلمة السر خاطئة!</p>
-        </div>
+        <label>القسم:</label>
+        <select id="postCategory">
+            <option value="أدوات ذكاء اصطناعي">أدوات ذكاء اصطناعي</option>
+            <option value="قصص وروايات">قصص وروايات</option>
+            <option value="شروحات وتقنية">شروحات وتقنية</option>
+            <option value="عام">عام</option>
+        </select>
+
+        <label>المحتوى النصي:</label>
+        <textarea id="postContent" placeholder="اكتب النص أو الشرح هنا..."></textarea>
+
+        <label>رابط فرعي / أداة (اختياري):</label>
+        <input type="text" id="postLink" placeholder="https://...">
+
+        <button onclick="publishPost()">نشر فوراً إلى الموقع</button>
+        <div id="statusMsg"></div>
+
+        <hr style="border-color: var(--border); margin: 30px 0;">
+
+        <h3>المحتوى المنشور حالياً:</h3>
+        <div id="adminPostsList">جاري التحميل...</div>
     </div>
 
-    <!-- نموذج إضافة محتوى جديد -->
-    <div class="container" id="admin-content" style="display: none;">
-        <div class="form-card">
-            <h2>نشر محتوى جديد</h2>
-            
-            <label for="title">عنوان المقال أو الأداة:</label>
-            <input type="text" id="title" placeholder="أدخل العنوان...">
-
-            <label for="category">القسم:</label>
-            <select id="category">
-                <option value="أدوات ذكاء اصطناعي">أدوات ذكاء اصطناعي</option>
-                <option value="قصص وروايات">قصص وروايات</option>
-                <option value="مقالات وتقنيات">مقالات وتقنيات</option>
-            </select>
-
-            <label for="content">المحتوى النصي:</label>
-            <textarea id="content" rows="6" placeholder="اكتب النص أو الشرح هنا..."></textarea>
-
-            <label for="link">رابط فرعي / أداة (اختياري):</label>
-            <input type="url" id="link" placeholder="https://...">
-
-            <button onclick="publishArticle()">نشر فوراً إلى الموقع</button>
-            <div id="status-msg"></div>
-        </div>
-    </div>
-
-    <!-- مكتبات Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-
-    <script>
-        // كلمة السر الخاصة بالدخول للوحة التحكم
-        const ADMIN_PASSWORD = "123";
-
-        // إعدادات Firebase الخاصة بمشروعك
-        const firebaseConfig = {
-            apiKey: "AIzaSyAdcBb_IjS5UqDsezzaSx5pfa8HVg0Y5qI",
-            authDomain: "my-tools-cb739.firebaseapp.com",
-            projectId: "my-tools-cb739",
-            storageBucket: "my-tools-cb739.firebasestorage.app",
-            messagingSenderId: "619758078194",
-            appId: "1:619758078194:web:79a0dfa1304cc3401d686b"
-        };
-
-        // تهيئة قواعد البيانات
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
-        // التحقق من كلمة السر
-        function checkAuth() {
-            const pass = document.getElementById('admin-pass-input').value;
-            if (pass === ADMIN_PASSWORD) {
-                document.getElementById('auth-overlay').style.display = 'none';
-                document.getElementById('admin-content').style.display = 'block';
-            } else {
-                document.getElementById('login-error').style.display = 'block';
-            }
-        }
-
-        // إرسال المقال إلى السحابة
-        function publishArticle() {
-            const title = document.getElementById('title').value;
-            const category = document.getElementById('category').value;
-            const content = document.getElementById('content').value;
-            const link = document.getElementById('link').value;
-            const statusMsg = document.getElementById('status-msg');
-
-            if (!title || !content) {
-                statusMsg.style.color = "#ef4444";
-                statusMsg.innerText = "يرجى ملء العنوان والمحتوى على الأقل.";
-                return;
-            }
-
-            statusMsg.style.color = "#38bdf8";
-            statusMsg.innerText = "جاري النشر...";
-
-            db.collection("articles").add({
-                title: title,
-                category: category,
-                content: content,
-                link: link,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            })
-            .then(() => {
-                statusMsg.style.color = "#22c55e";
-                statusMsg.innerText = "تم النشر بنجاح وظهرت في الموقع للجميع!";
-                document.getElementById('title').value = '';
-                document.getElementById('content').value = '';
-                document.getElementById('link').value = '';
-            })
-            .catch((error) => {
-                statusMsg.style.color = "#ef4444";
-                statusMsg.innerText = "حدث خطأ أثناء النشر: " + error.message;
-            });
-        }
-    </script>
+    <script src="ai_channel_website.js"></script>
 </body>
 </html>
