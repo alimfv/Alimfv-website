@@ -3,6 +3,17 @@ const API_KEY = "$2a$10$q3hqusJObfe1Ofk6eOk.g.DadnEjpiQCiSUPWmB/jsT0kkprqVzau";
 const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
 let globalPosts = [];
+let countdownInterval = null;
+
+// دالة إصلاح الروابط تلقائياً وإضافة https:// إذا كانت مفقودة
+function fixUrl(url) {
+    if (!url) return '';
+    url = url.trim();
+    if (!/^https?:\/\//i.test(url)) {
+        return 'https://' + url;
+    }
+    return url;
+}
 
 async function fetchPosts() {
     try {
@@ -41,7 +52,7 @@ function renderPosts(posts) {
 
     posts.forEach((post, index) => {
         let categoryHtml = post.category ? `<span class="card-badge">${post.category}</span>` : '';
-        let imageHtml = post.image ? `<img src="${post.image}" class="card-img" alt="صورة">` : '';
+        let imageHtml = post.image ? `<img src="${fixUrl(post.image)}" class="card-img" alt="صورة">` : '';
         let snippet = post.content.length > 100 ? post.content.substring(0, 100) + '...' : post.content;
         
         container.innerHTML += `
@@ -60,21 +71,29 @@ function openModal(index) {
     const post = globalPosts[index];
     if (!post) return;
 
+    if (countdownInterval) clearInterval(countdownInterval);
+
     document.getElementById('modalCategory').innerText = post.category || 'عام';
     document.getElementById('modalTitle').innerText = post.title;
     document.getElementById('modalContent').innerText = post.content;
 
     const imgElem = document.getElementById('modalImage');
     if (post.image) {
-        imgElem.src = post.image;
+        imgElem.src = fixUrl(post.image);
         imgElem.style.display = 'block';
     } else {
         imgElem.style.display = 'none';
     }
 
     const linkContainer = document.getElementById('modalLinkContainer');
-    if (post.link) {
-        linkContainer.innerHTML = `<a href="${post.link}" target="_blank" class="modal-link">زيارة الرابط / الأداة 🔗</a>`;
+    if (post.link && post.link.trim() !== '') {
+        const safeUrl = fixUrl(post.link);
+        linkContainer.innerHTML = `
+            <button id="goLinkBtn" class="modal-link" onclick="startLinkTimer('${safeUrl}')">
+                زيارة الرابط / الأداة 🔗
+            </button>
+            <div id="timerStatus" style="margin-top:10px; font-size:0.9rem; font-weight:bold; color:#38bdf8;"></div>
+        `;
     } else {
         linkContainer.innerHTML = '';
     }
@@ -82,7 +101,45 @@ function openModal(index) {
     document.getElementById('articleModal').style.display = 'flex';
 }
 
+// دالة عداد الـ 10 ثواني
+function startLinkTimer(targetUrl) {
+    const btn = document.getElementById('goLinkBtn');
+    const status = document.getElementById('timerStatus');
+    if (!btn) return;
+
+    btn.disabled = true;
+    btn.style.opacity = "0.7";
+    btn.style.cursor = "not-allowed";
+
+    let timeLeft = 10;
+    btn.innerText = `⏳ انتظر (${timeLeft}) ثوانٍ...`;
+    status.innerText = "جاري تجهيز الرابط المباشر...";
+
+    if (countdownInterval) clearInterval(countdownInterval);
+
+    countdownInterval = setInterval(() => {
+        timeLeft--;
+        if (timeLeft > 0) {
+            btn.innerText = `⏳ انتظر (${timeLeft}) ثوانٍ...`;
+        } else {
+            clearInterval(countdownInterval);
+            btn.innerText = `🚀 جاري التوجيه الآن...`;
+            status.innerText = "تم إكمال العد التنازلي!";
+            window.open(targetUrl, '_blank');
+
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.style.opacity = "1";
+                btn.style.cursor = "pointer";
+                btn.innerText = "زيارة الرابط / الأداة 🔗";
+                status.innerText = "";
+            }, 3000);
+        }
+    }, 1000);
+}
+
 function closeModal(e) {
+    if (countdownInterval) clearInterval(countdownInterval);
     document.getElementById('articleModal').style.display = 'none';
 }
 
