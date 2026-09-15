@@ -5,10 +5,15 @@ const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 let globalPosts = [];
 let countdownInterval = null;
 
-// دالة إصلاح الروابط تلقائياً وإضافة https:// إذا كانت مفقودة
+// دالة إصلاح وتجهيز الرابط تلقائياً ومنع التكرار
 function fixUrl(url) {
     if (!url) return '';
     url = url.trim();
+    if (url === 'https://' || url === 'http://') return '';
+    
+    // إزالة أي تكرار ناتج عن اللصق مثل https://https://
+    url = url.replace(/^(https?:\/\/)+/i, 'https://');
+    
     if (!/^https?:\/\//i.test(url)) {
         return 'https://' + url;
     }
@@ -52,7 +57,7 @@ function renderPosts(posts) {
 
     posts.forEach((post, index) => {
         let categoryHtml = post.category ? `<span class="card-badge">${post.category}</span>` : '';
-        let imageHtml = post.image ? `<img src="${fixUrl(post.image)}" class="card-img" alt="صورة">` : '';
+        let imageHtml = (post.image && post.image !== 'https://') ? `<img src="${fixUrl(post.image)}" class="card-img" alt="صورة">` : '';
         let snippet = post.content.length > 100 ? post.content.substring(0, 100) + '...' : post.content;
         
         container.innerHTML += `
@@ -78,7 +83,7 @@ function openModal(index) {
     document.getElementById('modalContent').innerText = post.content;
 
     const imgElem = document.getElementById('modalImage');
-    if (post.image) {
+    if (post.image && post.image.trim() !== '' && post.image !== 'https://') {
         imgElem.src = fixUrl(post.image);
         imgElem.style.display = 'block';
     } else {
@@ -86,7 +91,7 @@ function openModal(index) {
     }
 
     const linkContainer = document.getElementById('modalLinkContainer');
-    if (post.link && post.link.trim() !== '') {
+    if (post.link && post.link.trim() !== '' && post.link !== 'https://') {
         const safeUrl = fixUrl(post.link);
         linkContainer.innerHTML = `
             <button id="goLinkBtn" class="modal-link" onclick="startLinkTimer('${safeUrl}')">
@@ -101,7 +106,6 @@ function openModal(index) {
     document.getElementById('articleModal').style.display = 'flex';
 }
 
-// دالة عداد الـ 10 ثواني
 function startLinkTimer(targetUrl) {
     const btn = document.getElementById('goLinkBtn');
     const status = document.getElementById('timerStatus');
@@ -155,15 +159,18 @@ function filterPosts() {
 async function publishPost() {
     const title = document.getElementById('postTitle').value.trim();
     const category = document.getElementById('postCategory').value;
-    const image = document.getElementById('postImage').value.trim();
+    const rawImage = document.getElementById('postImage').value.trim();
     const content = document.getElementById('postContent').value.trim();
-    const link = document.getElementById('postLink').value.trim();
+    const rawLink = document.getElementById('postLink').value.trim();
     const statusMsg = document.getElementById('statusMsg');
     
     if (!title || !content) {
         alert("الرجاء كتابة العنوان والمحتوى!");
         return;
     }
+
+    const image = fixUrl(rawImage);
+    const link = fixUrl(rawLink);
 
     statusMsg.style.color = "#38bdf8";
     statusMsg.innerText = "⏳ جاري الإرسال إلى السحاب...";
@@ -177,9 +184,9 @@ async function publishPost() {
         statusMsg.style.color = "#4ade80";
         statusMsg.innerText = "✅ تم النشر بنجاح وظهرت في الموقع للجميع!";
         document.getElementById('postTitle').value = '';
-        document.getElementById('postImage').value = '';
+        document.getElementById('postImage').value = 'https://';
         document.getElementById('postContent').value = '';
-        document.getElementById('postLink').value = '';
+        document.getElementById('postLink').value = 'https://';
         loadAdminPosts();
     } else {
         statusMsg.style.color = "#ef4444";
