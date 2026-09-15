@@ -4,38 +4,26 @@ const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
 let globalPosts = [];
 
-// جلب البيانات من السحاب
 async function fetchPosts() {
     try {
-        let response = await fetch(API_URL, {
-            headers: { 'X-Master-Key': API_KEY }
-        });
+        let response = await fetch(API_URL, { headers: { 'X-Master-Key': API_KEY } });
         let data = await response.json();
         return data.record.posts || [];
-    } catch (error) {
-        console.error("خطأ في الجلب:", error);
-        return [];
-    }
+    } catch (error) { return []; }
 }
 
-// حفظ البيانات في السحاب
 async function savePostsToCloud(posts) {
     let response = await fetch(API_URL, {
         method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Master-Key': API_KEY
-        },
+        headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
         body: JSON.stringify({ posts: posts })
     });
     return response.ok;
 }
 
-// عرض المقالات في الصفحة الرئيسية
 async function loadIndexPosts() {
     const container = document.getElementById('postsContainer');
     if (!container) return;
-    
     container.innerHTML = '<p style="color: #94a3b8;">جاري الاتصال بالسحاب...</p>';
     globalPosts = await fetchPosts();
     renderPosts(globalPosts);
@@ -51,22 +39,53 @@ function renderPosts(posts) {
         return;
     }
 
-    posts.forEach((post) => {
-        let linkHtml = post.link ? `<br><br><a href="${post.link}" target="_blank">زيارة الرابط / الأداة 🔗</a>` : '';
+    posts.forEach((post, index) => {
         let categoryHtml = post.category ? `<span class="card-badge">${post.category}</span>` : '';
+        let imageHtml = post.image ? `<img src="${post.image}" class="card-img" alt="صورة">` : '';
+        let snippet = post.content.length > 100 ? post.content.substring(0, 100) + '...' : post.content;
         
         container.innerHTML += `
-            <div class="card">
+            <div class="card" onclick="openModal(${index})">
+                ${imageHtml}
                 ${categoryHtml}
                 <h3>${post.title}</h3>
-                <p>${post.content}</p>
-                ${linkHtml}
+                <p>${snippet}</p>
+                <span class="read-more">قراءة المقال كاملاً ←</span>
             </div>
         `;
     });
 }
 
-// تصفية البحث
+function openModal(index) {
+    const post = globalPosts[index];
+    if (!post) return;
+
+    document.getElementById('modalCategory').innerText = post.category || 'عام';
+    document.getElementById('modalTitle').innerText = post.title;
+    document.getElementById('modalContent').innerText = post.content;
+
+    const imgElem = document.getElementById('modalImage');
+    if (post.image) {
+        imgElem.src = post.image;
+        imgElem.style.display = 'block';
+    } else {
+        imgElem.style.display = 'none';
+    }
+
+    const linkContainer = document.getElementById('modalLinkContainer');
+    if (post.link) {
+        linkContainer.innerHTML = `<a href="${post.link}" target="_blank" class="modal-link">زيارة الرابط / الأداة 🔗</a>`;
+    } else {
+        linkContainer.innerHTML = '';
+    }
+
+    document.getElementById('articleModal').style.display = 'flex';
+}
+
+function closeModal(e) {
+    document.getElementById('articleModal').style.display = 'none';
+}
+
 function filterPosts() {
     const query = document.getElementById('searchInput').value.toLowerCase();
     const filtered = globalPosts.filter(p => 
@@ -76,10 +95,10 @@ function filterPosts() {
     renderPosts(filtered);
 }
 
-// نشر مقال جديد
 async function publishPost() {
     const title = document.getElementById('postTitle').value.trim();
     const category = document.getElementById('postCategory').value;
+    const image = document.getElementById('postImage').value.trim();
     const content = document.getElementById('postContent').value.trim();
     const link = document.getElementById('postLink').value.trim();
     const statusMsg = document.getElementById('statusMsg');
@@ -93,7 +112,7 @@ async function publishPost() {
     statusMsg.innerText = "⏳ جاري الإرسال إلى السحاب...";
 
     let posts = await fetchPosts();
-    posts.unshift({ title, category, content, link, date: new Date().toLocaleDateString('ar-EG') });
+    posts.unshift({ title, category, image, content, link, date: new Date().toLocaleDateString('ar-EG') });
     
     let success = await savePostsToCloud(posts);
     
@@ -101,6 +120,7 @@ async function publishPost() {
         statusMsg.style.color = "#4ade80";
         statusMsg.innerText = "✅ تم النشر بنجاح وظهرت في الموقع للجميع!";
         document.getElementById('postTitle').value = '';
+        document.getElementById('postImage').value = '';
         document.getElementById('postContent').value = '';
         document.getElementById('postLink').value = '';
         loadAdminPosts();
@@ -110,7 +130,6 @@ async function publishPost() {
     }
 }
 
-// عرض المقالات في لوحة التحكم
 async function loadAdminPosts() {
     const list = document.getElementById('adminPostsList');
     if (!list) return;
@@ -142,7 +161,6 @@ async function deletePost(index) {
     loadAdminPosts();
 }
 
-// تشغيل عند التحميل
 window.onload = () => {
     if (document.getElementById('postsContainer')) loadIndexPosts();
     if (document.getElementById('adminPostsList')) loadAdminPosts();
