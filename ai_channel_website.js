@@ -1,123 +1,149 @@
-const STORAGE_KEY = 'site_posts_data';
+// --- إعدادات السحاب (JSONBin) ---
+const BIN_ID = "6aa96340ac6210605ad0ecc2"; 
+const API_KEY = "$2a$10$q3hqusJObfe1Ofk6eOk.g.DadnEjpiQCiSUPWmB/jsT0kkprqVzau";
+const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
-function getPosts() {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
-}
-
-function savePosts(posts) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
-}
-
-function publishPost() {
-    const title = document.getElementById('postTitle').value.trim();
-    const content = document.getElementById('postContent').value.trim();
-
-    if (!title || !content) {
-        alert('يرجى ملء جميع الحقول!');
-        return;
-    }
-
-    const posts = getPosts();
-    const newPost = {
-        id: Date.now(),
-        title: title,
-        content: content,
-        date: new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' })
-    };
-
-    posts.unshift(newPost);
-    savePosts(posts);
-
-    document.getElementById('postTitle').value = '';
-    document.getElementById('postContent').value = '';
-
-    alert('تم النشر بنجاح!');
-    renderAdminPosts();
-}
-
-function deletePost(id) {
-    if (confirm('هل أنت متأكد من رغبتك في حذف هذا المقال؟')) {
-        let posts = getPosts();
-        posts = posts.filter(p => p.id !== id);
-        savePosts(posts);
-        renderAdminPosts();
+// جلب المقالات من السحاب
+async function fetchPosts() {
+    try {
+        let response = await fetch(API_URL, {
+            headers: { 'X-Master-Key': API_KEY }
+        });
+        let data = await response.json();
+        return data.record.posts || [];
+    } catch (error) {
+        console.error("خطأ في جلب المقالات:", error);
+        return [];
     }
 }
 
-function renderAdminPosts() {
-    const container = document.getElementById('adminPostsContainer');
-    if (!container) return;
-
-    const posts = getPosts();
-    if (posts.length === 0) {
-        container.innerHTML = '<p style="color: var(--text-sub); text-align:center; padding: 20px;">لا توجد مقالات منشورة بعد.</p>';
-        return;
+// حفظ المقالات في السحاب
+async function savePostsToCloud(posts) {
+    try {
+        await fetch(API_URL, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': API_KEY
+            },
+            body: JSON.stringify({ posts: posts })
+        });
+    } catch (error) {
+        console.error("خطأ في حفظ المقالات:", error);
     }
-
-    container.innerHTML = posts.map(post => `
-        <div class="post-item" style="background:#0b0f19; border:1px solid #334155; padding:15px; border-radius:10px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
-            <div>
-                <h4 style="color:#f8fafc; font-size:1rem; margin-bottom:4px;">${escapeHtml(post.title)}</h4>
-                <span style="color:#94a3b8; font-size:0.75rem;">${post.date}</span>
-            </div>
-            <button class="btn-delete" onclick="deletePost(${post.id})" style="background:#ef4444; color:white; border:none; padding:8px 14px; border-radius:6px; cursor:pointer; font-weight:bold;">حذف</button>
-        </div>
-    `).join('');
 }
 
-// عرض المقالات في الموقع مع تفعيل البحث
-function renderPublicPosts(filterText = '') {
+// عرض المقالات في الصفحة الرئيسية
+async function loadIndexPosts() {
     const container = document.getElementById('postsContainer');
     if (!container) return;
-
-    let posts = getPosts();
-
-    // فلترة المقالات حسب نص البحث
-    if (filterText.trim() !== '') {
-        const query = filterText.toLowerCase();
-        posts = posts.filter(p => p.title.toLowerCase().includes(query) || p.content.toLowerCase().includes(query));
-    }
-
+    
+    container.innerHTML = '<p style="text-align:center;">جاري تحميل المقالات...</p>';
+    const posts = await fetchPosts();
+    container.innerHTML = '';
+    
     if (posts.length === 0) {
-        container.innerHTML = '<div class="no-posts">لا توجد مقالات مطابقة للبحث أو منشورة حالياً.</div>';
+        container.innerHTML = '<p style="text-align:center;">لا توجد مقالات حالياً.</p>';
         return;
     }
 
-    container.innerHTML = posts.map(post => `
-        <div class="post-card">
-            <div>
-                <h3>${escapeHtml(post.title)}</h3>
-                <div class="date">${post.date}</div>
-                <p>${escapeHtml(post.content)}</p>
+    posts.forEach((post, index) => {
+        container.innerHTML += `
+            <div class="card" onclick="openModal(${index})" style="border:1px solid #ccc; padding:15px; margin:10px 0; cursor:pointer;">
+                <h3>${post.title}</h3>
+                <p>${post.content.substring(0, 100)}...</p>
             </div>
-            <button class="btn-read" onclick="openModal(${post.id})">اقرأ المزيد ودخول المقال</button>
-        </div>
-    `).join('');
+        `;
+    });
 }
 
-// دالة البحث التلقائي عند الكتابة
-function filterPosts() {
-    const query = document.getElementById('searchInput').value;
-    renderPublicPosts(query);
+// نشر مقال جديد من لوحة التحكم
+async function publishPost() {
+    const title = document.getElementById('postTitle').value;
+    const content = document.getElementById('postContent').value;
+    
+    if (!title || !content) {
+        alert("الرجاء ملء جميع الحقول!");
+        return;
+    }
+
+    alert("جاري النشر على السحاب...");
+    let posts = await fetchPosts();
+    posts.unshift({ title, content, date: new Date().toLocaleDateString('ar-EG') });
+    
+    await savePostsToCloud(posts);
+    
+    alert("تم النشر بنجاح! سيظهر المقال للجميع الآن.");
+    document.getElementById('postTitle').value = '';
+    document.getElementById('postContent').value = '';
+    loadAdminPosts();
 }
 
-function openModal(id) {
-    const posts = getPosts();
-    const post = posts.find(p => p.id === id);
+// إدارة وحذف المقالات في لوحة التحكم
+async function loadAdminPosts() {
+    const list = document.getElementById('adminPostsList');
+    if (!list) return;
+    
+    list.innerHTML = 'جاري التحميل...';
+    const posts = await fetchPosts();
+    list.innerHTML = '';
+    
+    posts.forEach((post, index) => {
+        list.innerHTML += `
+            <div class="admin-post-item" style="display:flex; justify-content:space-between; margin:10px 0; background:#f4f4f4; padding:10px;">
+                <span>${post.title}</span>
+                <button onclick="deletePost(${index})" style="color:red;">حذف</button>
+            </div>
+        `;
+    });
+}
 
-    if (post) {
-        document.getElementById('modalTitle').innerText = post.title;
-        document.getElementById('modalDate').innerText = post.date;
-        document.getElementById('modalBody').innerText = post.content;
-        document.getElementById('articleModal').classList.add('active');
+async function deletePost(index) {
+    if (!confirm("هل أنت تأكد من حذف هذا المقال؟")) return;
+    let posts = await fetchPosts();
+    posts.splice(index, 1);
+    await savePostsToCloud(posts);
+    loadAdminPosts();
+    alert("تم الحذف بنجاح!");
+}
+
+// التحقق من كلمة المرور للوحة التحكم
+function loginAdmin() {
+    const pass = document.getElementById('adminPassword').value;
+    if (pass === "123") {
+        document.getElementById('loginSection').style.display = 'none';
+        document.getElementById('adminPanel').style.display = 'block';
+        loadAdminPosts();
+    } else {
+        alert("كلمة المرور خطأ!");
+    }
+}
+
+// نافذة عرض المقال الكامل
+async function openModal(index) {
+    const posts = await fetchPosts();
+    const post = posts[index];
+    if (!post) return;
+    
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const modal = document.getElementById('articleModal');
+
+    if (modalTitle && modalBody && modal) {
+        modalTitle.innerText = post.title;
+        modalBody.innerText = post.content;
+        modal.style.display = 'block';
     }
 }
 
 function closeModal() {
-    document.getElementById('articleModal').classList.remove('active');
+    const modal = document.getElementById('articleModal');
+    if (modal) modal.style.display = 'none';
 }
 
-function escapeHtml(str) {
-    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-}
+// التشغيل التلقائي عند فتح الصفحة
+window.onload = () => {
+    if (document.getElementById('postsContainer')) {
+        loadIndexPosts();
+    }
+};
