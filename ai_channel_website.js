@@ -7,7 +7,7 @@ function renderPosts(postsToRender) {
         container.innerHTML = `
             <div style="text-align:center; padding:40px 20px; color:var(--text-sub);">
                 <p style="font-size:1.2rem; margin-bottom:10px;">📭 لا توجد مقالات حالياً</p>
-                <p style="font-size:0.9rem;">يمكنك إضافة مقالات وأدوات جديدة من لوحة التحكم (admin.html)</p>
+                <p style="font-size:0.9rem;"></p>
             </div>
         `;
         return;
