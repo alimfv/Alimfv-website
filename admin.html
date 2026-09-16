@@ -3,101 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم - إدارة المقالات</title>
+    <title>لوحة التحكم</title>
     <style>
         :root {
-            --bg: #0f172a;
-            --card: #1e293b;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
             --accent: #38bdf8;
             --text: #f8fafc;
             --border: #334155;
         }
-        body { background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; padding: 20px; max-width: 650px; margin: 0 auto; }
-        h1 { color: var(--accent); text-align: center; }
-        .form-group { margin-bottom: 15px; text-align: right; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, textarea { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: #fff; box-sizing: border-box; }
+        body { background-color: var(--bg-color); color: var(--text); font-family: system-ui, sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .panel { width: 100%; max-width: 600px; background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 25px; box-sizing: border-box; }
+        h2 { color: var(--accent); margin-top: 0; text-align: center; }
+        label { display: block; margin-top: 15px; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
+        input, select, textarea {
+            width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);
+            background-color: #0f172a; color: var(--text); box-sizing: border-box; font-size: 0.95rem;
+        }
         textarea { height: 120px; resize: vertical; }
-        button.btn-add { width: 100%; padding: 12px; background: #22c55e; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; margin-top: 10px; }
-        .post-item { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 8px; margin-top: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .btn-del { background: #ef4444; color: #fff; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        button {
+            width: 100%; padding: 14px; margin-top: 20px; background-color: var(--accent);
+            color: #0f172a; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer;
+        }
+        #statusMsg { text-align: center; margin-top: 15px; font-weight: bold; }
+        .item-row { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px solid var(--border); }
+        .del-btn { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; width: auto; margin: 0; }
     </style>
 </head>
 <body>
-    <h1>🛠️ لوحة تحكم المقالات والأدوات</h1>
-    <form id="addPostForm">
-        <div class="form-group">
-            <label>عنوان المقال / الأداة:</label>
-            <input type="text" id="title" required placeholder="مثال: أداة صانع المانجا">
-        </div>
-        <div class="form-group">
-            <label>القسم:</label>
-            <input type="text" id="category" placeholder="مثال: أدوات ذكاء اصطناعي">
-        </div>
-        <div class="form-group">
-            <label>صورة المقال (رابط URL اختياري):</label>
-            <input type="url" id="image" placeholder="https://example.com/image.png">
-        </div>
-        <div class="form-group">
-            <label>رابط الأداة المباشر:</label>
-            <input type="url" id="link" required placeholder="https://example.com">
-        </div>
-        <div class="form-group">
-            <label>الشرح / المحتوى:</label>
-            <textarea id="content" required placeholder="اكتب شرح الأداة هنا..."></textarea>
-        </div>
-        <button type="submit" class="btn-add">➕ نشر المقال جديد</button>
-    </form>
+    <div class="panel">
+        <h2>نشر محتوى جديد</h2>
+        
+        <label>عنوان المقال أو الأداة:</label>
+        <input type="text" id="postTitle" placeholder="أدخل العنوان...">
 
-    <h2 style="margin-top: 30px; text-align: right;">📋 المقالات المنشورة حالياً</h2>
-    <div id="adminPostsList"></div>
+        <label>القسم:</label>
+        <select id="postCategory">
+            <option value="أدوات ذكاء اصطناعي">أدوات ذكاء اصطناعي</option>
+            <option value="قصص وروايات">قصص وروايات</option>
+            <option value="شروحات وتقنية">شروحات وتقنية</option>
+            <option value="عام">عام</option>
+        </select>
 
-    <script>
-        let posts = JSON.parse(localStorage.getItem('my_website_posts')) || [];
+        <label>رابط الصورة (اختياري):</label>
+        <input type="text" id="postImage" value="https://">
 
-        function renderAdminPosts() {
-            const list = document.getElementById('adminPostsList');
-            if (posts.length === 0) {
-                list.innerHTML = '<p style="color:#94a3b8; text-align:center;">لا توجد مقالات حالياً.</p>';
-                return;
-            }
-            list.innerHTML = posts.map(p => `
-                <div class="post-item">
-                    <div>
-                        <strong style="color:#fff;">${p.title}</strong>
-                        <div style="font-size:0.85rem; color:#94a3b8;">${p.category || 'عام'}</div>
-                    </div>
-                    <button class="btn-del" onclick="deletePost(${p.id})">🗑️ حذف</button>
-                </div>
-            `).join('');
-        }
+        <label>المحتوى النصي الكامل:</label>
+        <textarea id="postContent" placeholder="اكتب النص أو الشرح كاملاً هنا..."></textarea>
 
-        document.getElementById('addPostForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const newPost = {
-                id: Date.now(),
-                title: document.getElementById('title').value,
-                category: document.getElementById('category').value || 'أدوات',
-                image: document.getElementById('image').value,
-                link: document.getElementById('link').value,
-                content: document.getElementById('content').value
-            };
-            posts.unshift(newPost);
-            localStorage.setItem('my_website_posts', JSON.stringify(posts));
-            document.getElementById('addPostForm').reset();
-            renderAdminPosts();
-            alert('تم نشر المقال بنجاح!');
-        });
+        <label>رابط فرعي / أداة (اختياري):</label>
+        <input type="text" id="postLink" value="https://">
 
-        function deletePost(id) {
-            if (confirm('هل أنت متأكد من حذف هذا المقال؟')) {
-                posts = posts.filter(p => p.id !== id);
-                localStorage.setItem('my_website_posts', JSON.stringify(posts));
-                renderAdminPosts();
-            }
-        }
+        <button onclick="publishPost()">نشر فوراً إلى الموقع</button>
+        <div id="statusMsg"></div>
 
-        renderAdminPosts();
-    </script>
+        <hr style="border-color: var(--border); margin: 30px 0;">
+        <h3>المحتوى المنشور حالياً:</h3>
+        <div id="adminPostsList">جاري التحميل...</div>
+    </div>
+
+    <script src="ai_channel_website.js"></script>
 </body>
 </html>
