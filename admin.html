@@ -3,111 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم المنصة</title>
+    <title>لوحة التحكم</title>
     <style>
-        body { background-color: #0f172a; color: #f8fafc; font-family: system-ui, sans-serif; padding: 20px; display: flex; justify-content: center; }
-        .admin-card { background: #1e293b; border: 1px solid #334155; padding: 25px; border-radius: 12px; width: 100%; max-width: 600px; }
-        h2 { color: #38bdf8; text-align: center; margin-top: 0; }
-        label { display: block; margin: 12px 0 5px 0; color: #94a3b8; font-size: 0.9rem; }
-        input[type="text"], textarea, select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff; box-sizing: border-box; }
-        .link-row { display: flex; gap: 10px; margin-bottom: 10px; }
-        .btn { background: #38bdf8; color: #0f172a; padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; }
-        .btn-add { background: #334155; color: #38bdf8; width: auto; margin-top: 5px; }
-        .btn-danger { background: #ef4444; color: #fff; border: none; border-radius: 8px; cursor: pointer; padding: 0 12px; }
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #38bdf8;
+            --text: #f8fafc;
+            --border: #334155;
+        }
+        body { background-color: var(--bg-color); color: var(--text); font-family: system-ui, sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .panel { width: 100%; max-width: 600px; background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 25px; box-sizing: border-box; }
+        h2 { color: var(--accent); margin-top: 0; text-align: center; }
+        label { display: block; margin-top: 15px; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
+        input, select, textarea {
+            width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);
+            background-color: #0f172a; color: var(--text); box-sizing: border-box; font-size: 0.95rem;
+        }
+        textarea { height: 120px; resize: vertical; }
+        button {
+            width: 100%; padding: 14px; margin-top: 20px; background-color: var(--accent);
+            color: #0f172a; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer;
+        }
+        #statusMsg { text-align: center; margin-top: 15px; font-weight: bold; }
+        .item-row { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px solid var(--border); }
+        .del-btn { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; width: auto; margin: 0; }
     </style>
 </head>
 <body>
-    <div class="admin-card">
-        <h2>إضافة أداة / مقال جديد 📝</h2>
+    <div class="panel">
+        <h2>نشر محتوى جديد</h2>
         
         <label>عنوان المقال أو الأداة:</label>
-        <input type="text" id="postTitle" placeholder="مثال: أداة تصميم المانجا بالذكاء الاصطناعي">
+        <input type="text" id="postTitle" placeholder="أدخل العنوان...">
 
         <label>القسم:</label>
         <select id="postCategory">
             <option value="أدوات ذكاء اصطناعي">أدوات ذكاء اصطناعي</option>
-            <option value="برومبتات جاهزة">برومبتات جاهزة</option>
-            <option value="شروحات مونتاج">شروحات مونتاج</option>
+            <option value="قصص وروايات">قصص وروايات</option>
+            <option value="شروحات وتقنية">شروحات وتقنية</option>
+            <option value="عام">عام</option>
         </select>
 
-        <label>رفع صورة المعاينة (مباشرة من جهازك):</label>
-        <input type="file" id="postImageFile" accept="image/*">
+        <label>رابط الصورة (اختياري):</label>
+        <input type="text" id="postImage" value="https://">
 
-        <label>محتوى المقال والشرح:</label>
-        <textarea id="postContent" rows="6" placeholder="اكتب شرح الأداة هنا..."></textarea>
+        <label>المحتوى النصي الكامل:</label>
+        <textarea id="postContent" placeholder="اكتب النص أو الشرح كاملاً هنا..."></textarea>
 
-        <label>روابط الأداة والمرفقات:</label>
-        <div id="linksContainer">
-            <div class="link-row">
-                <input type="text" class="link-name" placeholder="اسم الرابط (مثال: رابط الأداة الرئيسي)">
-                <input type="text" class="link-url" placeholder="الرابط (https://...)">
-            </div>
-        </div>
-        <button type="button" class="btn btn-add" onclick="addLinkInput()">+ إضافة رابط آخر</button>
+        <label>رابط فرعي / أداة (اختياري):</label>
+        <input type="text" id="postLink" value="https://">
 
-        <button type="button" class="btn" onclick="savePost()">نشر المقال في الموقع 🚀</button>
+        <button onclick="publishPost()">نشر فوراً إلى الموقع</button>
+        <div id="statusMsg"></div>
+
+        <hr style="border-color: var(--border); margin: 30px 0;">
+        <h3>المحتوى المنشور حالياً:</h3>
+        <div id="adminPostsList">جاري التحميل...</div>
     </div>
 
-    <script>
-        function addLinkInput() {
-            const container = document.getElementById('linksContainer');
-            const div = document.createElement('div');
-            div.className = 'link-row';
-            div.innerHTML = `
-                <input type="text" class="link-name" placeholder="اسم الرابط">
-                <input type="text" class="link-url" placeholder="الرابط">
-                <button type="button" class="btn-danger" onclick="this.parentElement.remove()">✕</button>
-            `;
-            container.appendChild(div);
-        }
-
-        function savePost() {
-            const title = document.getElementById('postTitle').value;
-            const category = document.getElementById('postCategory').value;
-            const content = document.getElementById('postContent').value;
-            const fileInput = document.getElementById('postImageFile');
-
-            if (!title || !content) { alert('يرجى ملء كافة البيانات الرئيسية!'); return; }
-
-            // تجميع الروابط
-            const linkNames = document.querySelectorAll('.link-name');
-            const linkUrls = document.querySelectorAll('.link-url');
-            const links = [];
-            
-            linkNames.forEach((input, index) => {
-                if (input.value && linkUrls[index].value) {
-                    links.push({ name: input.value, url: linkUrls[index].value });
-                }
-            });
-
-            // قراءة الصورة وتحويلها إلى Base64
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const imageData = e.target ? e.target.result : '';
-                
-                const newPost = {
-                    id: Date.now(),
-                    title: title,
-                    category: category,
-                    image: imageData,
-                    content: content,
-                    links: links
-                };
-
-                let posts = JSON.parse(localStorage.getItem('my_website_posts') || '[]');
-                posts.unshift(newPost);
-                localStorage.setItem('my_website_posts', JSON.stringify(posts));
-
-                alert('تم حفظ ونشر المقال بنجاح!');
-                window.location.href = 'index.html';
-            };
-
-            if (fileInput.files[0]) {
-                reader.readAsDataURL(fileInput.files[0]);
-            } else {
-                reader.onload({}); // بدون صورة
-            }
-        }
-    </script>
+    <script src="ai_channel_website.js"></script>
 </body>
 </html>
