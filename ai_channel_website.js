@@ -1,13 +1,25 @@
-// قراءة البيانات المضافة من لوحة التحكم + مقال افتراضي أول
+// المقال الكامل الافتراضي للمانجا مع الدعم الكامل للإعلانات والروابط
 const defaultPosts = [
     {
         id: 1,
         title: "أداة مذهلة لصنع قصص المانجا والأنمي بالذكاء الاصطناعي مجاناً",
         category: "أدوات ذكاء اصطناعي",
         image: "",
-        content: "إذا كانت لديك فكرة لقصة مانجا وتريد تحويلها إلى مشاهد مصورة دون الحاجة للتفكير في تفاصيل كتابة أوامر الرسم، فهذه الأداة هي الحل الأسرع لك!\n\nتعمل الأداة كمساعد سيناريو ومخرج فني؛ حيث تبدأ بوضع فكرة القصة البسيطة، لتقوم الأداة بتطوير الأحداث، تقسيم المشاهد، وتوليد أوامر رسم (Prompts) جاهزة ومخصصة لإنشاء صفحات المانجا.",
+        content: `إذا كانت لديك فكرة لقصة مانجا وتريد تحويلها إلى مشاهد مصورة دون الحاجة للتفكير في تفاصيل كتابة أوامر الرسم، فهذه الأداة هي الحل الأسرع لك!
+
+تعمل الأداة كمساعد سيناريو ومخرج فني؛ حيث تبدأ بوضع فكرة القصة البسيطة، لتقوم الأداة بتطوير الأحداث، تقسيم المشاهد، وتوليد أوامر رسم (Prompts) جاهزة ومخصصة لإنشاء صفحات المانجا.
+
+📌 طريقة عمل الأداة:
+• تطوير القصة: تحويل فكرتك البسيطة إلى أحداث متسلسلة وحوارات مشوقة.
+• توليد برومبتات الصور (Prompts): استخراج أوامر وصفية دقيقة باللغة الإنجليزية لتوليد صور مانجا متناسقة عبر أدوات توليد الصور (مثل Midjourney أو Leonardo AI).
+• ضبط تفاصيل المشهد: تحديد زوايا الكاميرا، وضعيات الشخصيات، وتعابير الوجه داخل كل برومبت لضمان الجودة.
+
+📌 خطوات الاستخدام:
+1. اكتب فكرة قصتك داخل الأداة.
+2. احصل على السيناريو كاملاً مقسماً إلى مشاهد مع البرومبت الخاص بكل صورة.
+3. انسخ البرومبت واستخدمه في مولد الصور للحصول على صفحات مانجا احترافية جاهزة للنشر!`,
         links: [
-            { name: "رابط أداة توليد القصص والبرومبتات", url: "https://example.com/tool" },
+            { name: "رابط أداة توليد قصص المانجا والبرومبتات", url: "https://example.com/tool" },
             { name: "تحميل برومبتات المانجا الجاهزة", url: "https://example.com/prompts" }
         ]
     }
@@ -27,7 +39,7 @@ function renderPosts(postsToRender) {
             <span class="card-badge">${post.category}</span>
             ${post.image ? `<img src="${post.image}" class="card-img" alt="${post.title}">` : ''}
             <h3>${post.title}</h3>
-            <p>${post.content.substring(0, 100)}...</p>
+            <p>${post.content.substring(0, 110)}...</p>
         </div>
     `).join('');
 }
@@ -49,7 +61,6 @@ function openModal(id) {
 
     document.getElementById('modalContent').innerText = post.content;
 
-    // تجهيز قائمة الروابط متعددة الأزرار
     const linksContainer = document.getElementById('modalLinkContainer');
     if (post.links && post.links.length > 0) {
         linksContainer.innerHTML = post.links.map((link, idx) => `
@@ -72,7 +83,7 @@ function closeModal(event) {
     }
 }
 
-// ميزة قفل الإعلانات (Ad Gate): فتح إعلان Adsterra المباشر ثم تفعيل العداد التنازلي
+// نظام قفل الإعلانات والتوجيه
 function triggerAdGate(targetUrl, buttonId) {
     const btn = document.getElementById(buttonId);
     if (btn.classList.contains('ready')) {
@@ -80,10 +91,10 @@ function triggerAdGate(targetUrl, buttonId) {
         return;
     }
 
-    // 1. فتح إعلان Adsterra المباشر في نافذة جديدة (استبدل هذا الرابط برابط Direct Link الخاص بك في Adsterra إذا توفر لديك)
+    // فتح الإعلان في نافذة جديدة
     window.open("https://pl31360088.profitableratecpmnetwork.com/3c/46/68/3c4668b6dff417330e2a129729c101f0.js", "_blank");
 
-    // 2. العداد التنازلي في الصفحة (10 ثوانٍ)
+    // بدء العداد التنازلي
     let timeLeft = 10;
     btn.disabled = true;
     btn.style.opacity = "0.7";
@@ -97,7 +108,7 @@ function triggerAdGate(targetUrl, buttonId) {
             btn.disabled = false;
             btn.style.opacity = "1";
             btn.classList.add('ready');
-            btn.style.background = "#22c55e"; // تغيير اللون إلى الأخضر
+            btn.style.background = "#22c55e";
             btn.style.color = "#ffffff";
             btn.innerText = "🚀 رابطك جاهز! اضغط هنا للانتقال الآن";
         }
